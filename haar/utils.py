@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.image import imread
+from skimage.transform import resize
 
 
 def imshow(image: np.ndarray, title: str, grayscale: bool = False):
