@@ -6,7 +6,7 @@ from matplotlib.image import imread
 def imshow(image: np.ndarray, title: str, grayscale: bool = False):
     plt.title(title)
     if grayscale:
-        plt.imshow(image, cmap='gray')
+        plt.imshow(image, cmap='gray', vmin=0, vmax=255)
     else:
         plt.imshow(image)
     plt.axis('off')
