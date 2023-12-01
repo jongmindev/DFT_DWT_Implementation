@@ -1,6 +1,8 @@
 from tqdm import tqdm
 import utils
 import transform
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Visualization:
@@ -57,3 +59,44 @@ class Visualization:
         for k, img in images.items():
             images[k] = img[550:1150,3600:4200]
         utils.plot_images(images, **kwargs)
+    
+    def plot_rmse_by_compression_ratio(self, **kwargs):
+        original = self.transformer.loader.image_grayscaled
+        if self.reconstructed_images:
+            images = self.reconstructed_images
+        else:
+            self.compress_by_ratio()
+            images = self.reconstructed_images
+
+        rmse_list = []
+        x_values = []
+        for percentage, img in images.items():
+            rmse_list.append(utils.calculate_rmse(original, img))
+            x_values.append(1-0.01*float(percentage.rstrip('%')))  # Remove the percentage sign 
+        plt.plot(x_values, rmse_list, **kwargs)
+        plt.xlabel("Compression Percentage")
+        plt.ylabel("RMSE")
+        plt.title("Reconstruction Error Rate vs Compression Percentage")
+        plt.show()
+    
+    def plot_histogram(self, percentages_to_plot,xrange, yrange, **kwargs):
+        original = self.transformer.loader.image_grayscaled
+        if self.reconstructed_images:
+            images = self.reconstructed_images
+        else:
+            self.compress_by_ratio()
+            images = self.reconstructed_images
+
+        #plotting
+        fig, ax = plt.subplots(figsize=(8, 4))
+        ax.hist(utils.flatten_rescale(original), bins=256, range=[0, 1], density=False, alpha=1, color = "grey", label="Original Image")
+        for percentqage in percentages_to_plot:
+            pixel_vals = utils.flatten_rescale(images[percentqage])
+            ax.hist(pixel_vals, bins=256, range=[0, 1], density=False, alpha=0.3, label=f"Reconstructed Image ({percentqage})")
+        ax.set_title('Histogram Comparison')
+        ax.set_xlabel('Pixel Value (normalized)')
+        ax.set_ylabel('Frequency')
+        ax.legend()
+        plt.xlim(xrange[0], xrange[1])
+        plt.ylim(yrange[0], yrange[1])
+        plt.show()

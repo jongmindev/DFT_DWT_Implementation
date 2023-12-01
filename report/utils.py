@@ -45,6 +45,23 @@ def plot_images(images: dict, figsize=(24, 20), grid_width: int = 4, line_in_cen
 
     plt.show()
 
+def calculate_rmse(image1, image2):
+    # Normalize pixel values to the range of 0 to 1
+    image1 = image1 / 255.0
+    image2 = image2 / 255.0
+
+    # Calculate MSE
+    mse = np.mean((image1 - image2) ** 2)
+
+    # Calculate RMSE
+    rmse = np.sqrt(mse)
+
+    return rmse
+
+def flatten_rescale(image: np.ndarray) -> np.ndarray:
+    return image.flatten() / 255.0
+
+
 
 class ImageLoader:
     def __init__(self, image_or_path: Union[np.ndarray, str]) -> None:
