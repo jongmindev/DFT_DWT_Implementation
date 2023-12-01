@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import utils
-
+from utils import c_wavelets
+from tqdm import tqdm
 
 class Transform(ABC):
     def __init__(self, image_or_path) -> None:
@@ -154,14 +155,54 @@ class CWT(Transform):
     def __init__(self, image_or_path) -> None:
         super().__init__(image_or_path)
 
-    def transform(self) -> np.ndarray:
-        ### TODO ###
-        #
-        ############
-        pass
+    def _get_wavelet_mask(self, wavelet: str, omega_x: np.array, omega_y: np.array, **kwargs):
+        assert omega_x.shape == omega_y.shape
+
+        try:
+            return c_wavelets[wavelet](omega_x, omega_y, **kwargs)
+
+        except KeyError:
+            raise WaveletTransformException('Unknown wavelet: {}'.format(wavelet))
+
+    def _create_frequency_plane(self, image_shape: tuple):
+        assert len(image_shape) == 2
+
+        h, w = image_shape
+        w_2 = (w - 1) // 2
+        h_2 = (h - 1) // 2
+
+        w_pulse = 2 * np.pi / w * np.hstack((np.arange(0, w_2 + 1), np.arange(w_2 - w + 1, 0)))
+        h_pulse = 2 * np.pi / h * np.hstack((np.arange(0, h_2 + 1), np.arange(h_2 - h + 1, 0)))
+
+        xx, yy = np.meshgrid(w_pulse, h_pulse, indexing='xy')
+        dxx_dyy = abs((xx[0, 1] - xx[0, 0]) * (yy[1, 0] - yy[0, 0]))
+
+        return xx, yy, dxx_dyy
+
+    def transform(self, scales, wavelet, **wavelet_args):
+        assert isinstance(self.image, np.ndarray) and len(self.image.shape) == 2, 'x should be 2D numpy array'
+
+        x_image = np.fft.fft2(self.image)
+        xx, yy, dxx_dyy = self._create_frequency_plane(x_image.shape)
+
+        cwt = []
+        wav_norm = []
+
+        for scale_val in tqdm(scales):
+            mask = scale_val * self._get_wavelet_mask(wavelet, scale_val * xx, scale_val * yy, **wavelet_args)
+
+            cwt.append(np.fft.ifft2(x_image * mask))
+            wav_norm.append((np.sum(abs(mask)**2)*dxx_dyy)**(0.5 / (2 * np.pi)))
+
+        cwt = np.stack(cwt, axis=2)
+        wav_norm = np.array(wav_norm)
+
+        return cwt, wav_norm
 
     def inverse_transform(self, transformed_matrix: np.ndarray) -> np.ndarray:
-        ### TODO ###
-        #
-        ############
+        
+
         pass
+
+
+ 
