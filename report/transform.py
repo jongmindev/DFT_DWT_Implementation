@@ -41,6 +41,31 @@ class Transform(ABC):
         reconstructed_image = self.inverse_transform(matrix_compressed)
         return reconstructed_image
 
+    def cwt_compress_matrix(self, retention_ratio, take_abs = True) -> np.ndarray:
+        """ 
+        compresses the matrix by setting the values below percentage to 0
+        * retention_ratio : percentage of the values to keep
+        * matrix : matrix to compress (expected to be haar transformed matrix)
+        * take_abs : whether compress based on absolute value or remove FROM negative values (i.e. |mask| > threshold or mask > threshold)
+        """
+        assert self.transformed_matrix is not None, "Do transform first."
+        _, _, z_size = self.transformed_matrix.shape
+        mask = np.zeros(self.transformed_matrix.shape)
+        for scale_idx in range(z_size):
+            matrix_scaled = self.transformed_matrix[scale_idx]
+            if take_abs:
+                threshold = np.percentile(np.abs(matrix_scaled), float(retention_ratio))
+                mask = np.abs(matrix_scaled) > threshold
+            else : 
+                threshold = np.percentile(matrix_scaled, float(retention_ratio))
+                mask = matrix_scaled > threshold
+        matrix_compressed = self.transformed_matrix * mask       
+        return matrix_compressed
+
+    def cwt_compress_image(self, retention_ratio, take_abs = True) -> np.ndarray:
+        matrix_compressed = self.cwt_compress_matrix(retention_ratio, take_abs)
+        reconstructed_image = self.inverse_transform(matrix_compressed)
+        return reconstructed_image
 
 class FFT(Transform):
     def __init__(self, image_or_path) -> None:
@@ -154,6 +179,8 @@ class HaarWT(Transform):
 class CWT(Transform):
     def __init__(self, image_or_path) -> None:
         super().__init__(image_or_path)
+        self.scales = np.geomspace(1.0,256.0,100)
+        self.transformed_matrix, self.wave_norm = self.transform()
 
     def _get_wavelet_mask(self, wavelet: str, omega_x: np.array, omega_y: np.array, **kwargs):
         assert omega_x.shape == omega_y.shape
@@ -179,7 +206,7 @@ class CWT(Transform):
 
         return xx, yy, dxx_dyy
 
-    def transform(self, scales, wavelet, **wavelet_args):
+    def transform(self, wavelet='mexh', **wavelet_args):
         assert isinstance(self.image, np.ndarray) and len(self.image.shape) == 2, 'x should be 2D numpy array'
 
         x_image = np.fft.fft2(self.image)
@@ -188,7 +215,7 @@ class CWT(Transform):
         cwt = []
         wav_norm = []
 
-        for scale_val in tqdm(scales):
+        for scale_val in tqdm(self.scales):
             mask = scale_val * self._get_wavelet_mask(wavelet, scale_val * xx, scale_val * yy, **wavelet_args)
 
             cwt.append(np.fft.ifft2(x_image * mask))
@@ -199,10 +226,10 @@ class CWT(Transform):
 
         return cwt, wav_norm
 
-    def inverse_transform(self, transformed_matrix: np.ndarray) -> np.ndarray:
-        
-
+    def inverse_transform(self, compressed_matrix: np.ndarray) -> np.ndarray:
+        # C = 1.0 / (self.scales * self.wave_norm)
+        # reconstruction = (C * np.real(compressed_matrix)).sum(axis=-1)
+        # reconstruction = 1.0 - (reconstruction - reconstruction.min()) / (reconstruction.max() - reconstruction.min())
+        # return reconstruction
         pass
-
-
  
