@@ -45,6 +45,14 @@ def plot_images(images: dict, figsize=(24, 20), grid_width: int = 4, line_in_cen
 
     plt.show()
 
+def quantize_complex_array(complex_array: np.ndarray, num_bits=4) -> np.ndarray:
+    # 각 실수 및 허수 부분을 양자화
+    quantized_real = np.round(np.real(complex_array) * (2**num_bits - 1)) / (2**num_bits - 1)
+    quantized_imag = np.round(np.imag(complex_array) * (2**num_bits - 1)) / (2**num_bits - 1)
+    # 양자화된 실수 및 허수로 새로운 복소수 배열 생성
+    quantized_complex_array = quantized_real + 1j * quantized_imag
+    return quantized_complex_array
+
 def calculate_rmse(image1, image2):
     # Normalize pixel values to the range of 0 to 1
     image1 = image1 / 255.0
