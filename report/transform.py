@@ -226,10 +226,9 @@ class CWT(Transform):
 
         return cwt, wav_norm
 
-    def inverse_transform(self, compressed_matrix: np.ndarray) -> np.ndarray:
-        # C = 1.0 / (self.scales * self.wave_norm)
-        # reconstruction = (C * np.real(compressed_matrix)).sum(axis=-1)
-        # reconstruction = 1.0 - (reconstruction - reconstruction.min()) / (reconstruction.max() - reconstruction.min())
-        # return reconstruction
-        pass
+    def inverse_transform(self, compressed_matrix: np.ndarray, level) -> np.ndarray:
+        C = 1.0 / (self.scales[:level] * self.wave_norm[:level])
+        reconstruction = (C * np.real(compressed_matrix[..., :level])).sum(axis=-1)
+        reconstruction = 1.0 - (reconstruction - reconstruction.min()) / (reconstruction.max() - reconstruction.min())
+        return reconstruction
  
