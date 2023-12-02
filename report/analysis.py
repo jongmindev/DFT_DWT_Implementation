@@ -4,11 +4,11 @@ import transform
 
 
 class Visualization:
-    def __init__(self, transformer: transform.Transform) -> None:
+    def __init__(self, transformer: transform.Transform, dwt=True) -> None:
         self.transformer = transformer
         self.reconstructed_images = None
     
-    def compress_by_ratio(self):
+    def compress_by_ratio(self, dwt=True):
         retention_percentages = {
             "100%": 100,
             "50%": 50,
@@ -36,7 +36,10 @@ class Visualization:
         images = {"original": self.transformer.loader.image_grayscaled}
 
         for percentage, value in tqdm(retention_percentages.items()):
-            images[percentage] = self.transformer.compress_image(value)
+            if dwt:
+                images[percentage] = self.transformer.compress_image(value)
+            else: # CWT
+                images[percentage] = self.transformer.cwt_compress_image(value)
 
         self.reconstructed_images = images
 
@@ -54,6 +57,19 @@ class Visualization:
         else:
             self.compress_by_ratio()
             images = self.reconstructed_images
+        for k, img in images.items():
+            images[k] = img[550:1150,3600:4200]
+        utils.plot_images(images, **kwargs)
+
+
+    def cwt_compare_the_whole_by_compression_ratio(self, dwt=False, **kwargs):
+        self.compress_by_ratio(dwt)
+        images = self.reconstructed_images
+        utils.plot_images(images, **kwargs)
+    
+    def cwt_compare_the_waffle_by_compression_ratio(self, dwt=False, **kwargs):
+        self.compress_by_ratio(dwt)
+        images = self.reconstructed_images
         for k, img in images.items():
             images[k] = img[550:1150,3600:4200]
         utils.plot_images(images, **kwargs)
