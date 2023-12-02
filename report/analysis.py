@@ -100,7 +100,7 @@ class Visualization:
             plt.legend()
             plt.show()
     
-    def plot_histogram(self, percentages_to_plot,xrange = [0,1], yrange = [0,300000], **kwargs):
+    def plot_histogram(self, percentages_to_plot, xrange=[0, 1], yrange=[0, 300000], second_image=None, **kwargs):
         original = self.transformer.loader.image_grayscaled
         if self.reconstructed_images:
             images = self.reconstructed_images
@@ -108,16 +108,54 @@ class Visualization:
             self.compress_by_ratio()
             images = self.reconstructed_images
 
-        #plotting
-        fig, ax = plt.subplots(figsize=(8, 4))
-        ax.hist(utils.flatten_rescale(original), bins=256, range=[0, 1], density=False, alpha=1, color = "grey", label="Original Image")
-        for percentqage in percentages_to_plot:
-            pixel_vals = utils.flatten_rescale(images[percentqage])
-            ax.hist(pixel_vals, bins=256, range=[0, 1], density=False, alpha=0.3, label=f"Reconstructed Image ({percentqage})")
-        ax.set_title('Histogram Comparison')
-        ax.set_xlabel('Pixel percentage')
-        ax.set_ylabel('Frequency')
-        ax.legend()
-        plt.xlim(xrange[0], xrange[1])
-        plt.ylim(yrange[0], yrange[1])
+        if second_image:
+            if second_image.reconstructed_images:
+                second_image_recon = second_image.reconstructed_images
+            else:
+                second_image.compress_by_ratio()
+                second_image_recon = second_image.reconstructed_images
+
+        # Plotting
+        if second_image:
+            fig , (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+        else : 
+            fig, ax1 = plt.subplots(1, 1, figsize=(6, 4))
+
+        # Plot histogram for original image
+        ax1.hist(utils.flatten_rescale(original), bins=256, range=[0, 1], density=False, alpha=1, color="grey",
+                 label="Original Image")
+        # Plot histogram for first reconstructed image
+        for percentage in percentages_to_plot:
+            pixel_vals = utils.flatten_rescale(images[percentage])
+            ax1.hist(pixel_vals, bins=256, range=[0, 1], density=False, alpha=0.3, label=f"Reconstruction ({percentage})")
+        if kwargs['title_1'] : 
+            ax1.set_title(kwargs['title_1'])
+        else : 
+            ax1.set_title('Histogram Comparison')
+        ax1.set_xlabel('Pixel Intensity')
+        ax1.set_ylabel('Frequency')
+        ax1.legend()
+        ax1.set_xlim(xrange[0], xrange[1])
+        ax1.set_ylim(yrange[0], yrange[1])
+
+        # Plot histogram for second reconstructed image if provided
+        if second_image:
+            # Plot histogram for original image
+            ax2.hist(utils.flatten_rescale(original), bins=256, range=[0, 1], density=False, alpha=1, color="grey",
+                 label="Original Image")
+            for percentage in percentages_to_plot:
+                pixel_vals = utils.flatten_rescale(second_image_recon[percentage])
+                ax2.hist(pixel_vals, bins=256, range=[0, 1], density=False, alpha=0.3,
+                         label=f"Reconstruction ({percentage})")
+            if kwargs['title_2'] :
+                ax2.set_title(kwargs['title_2'])
+            else :
+                ax2.set_title('Histogram Comparison')
+            ax2.set_xlabel('Pixel Intensity')
+            ax2.set_ylabel('Frequency')
+            ax2.legend()
+            ax2.set_xlim(xrange[0], xrange[1])
+            ax2.set_ylim(yrange[0], yrange[1])
+
+        plt.tight_layout()
         plt.show()
