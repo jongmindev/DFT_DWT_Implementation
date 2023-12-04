@@ -94,13 +94,13 @@ class Visualization:
         plt.plot(x_values, rmse_list, **kwargs)
         if not plot_onto_same_graph:
             plt.xscale("log")
-            plt.xlabel("1 - Compression Rate")
+            plt.xlabel("Compression Rate")
             plt.ylabel("RMSE")
-            plt.title("Reconstruction Error Rate vs Compression Rate")
+            plt.title("Reconstruction Error Rate by Compression Rate")
             plt.legend()
             plt.show()
     
-    def plot_histogram(self, percentages_to_plot, xrange=[0, 1], yrange=[0, 300000], second_image=None, **kwargs):
+    def plot_histogram(self, percentages_to_plot, xrange=[0, 1], yrange=[0, 400000], second_image=None, **kwargs):
         original = self.transformer.loader.image_grayscaled
         if self.reconstructed_images:
             images = self.reconstructed_images
