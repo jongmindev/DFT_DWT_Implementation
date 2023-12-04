@@ -128,9 +128,10 @@ class Visualization:
         for percentage in percentages_to_plot:
             pixel_vals = utils.flatten_rescale(images[percentage])
             ax1.hist(pixel_vals, bins=256, range=[0, 1], density=False, alpha=0.3, label=f"Reconstruction ({percentage})")
-        if kwargs['title_1'] : 
-            ax1.set_title(kwargs['title_1'])
-        else : 
+        if 'title_1' in kwargs:
+            if kwargs['title_1']:
+                ax1.set_title(kwargs['title_1'])
+        else:
             ax1.set_title('Histogram Comparison')
         ax1.set_xlabel('Pixel Intensity')
         ax1.set_ylabel('Frequency')
